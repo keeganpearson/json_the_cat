@@ -1,36 +1,31 @@
 const request = require('request');
 
-const breedName = process.argv[2];
+const fetchBreedDescription = function(breedName, callback) {
+  // make a GET request to API endpoint
+  const url = `https://api.thecatapi.com/v1/breeds/search?q=${breedName}`;
 
-if (!breedName) {
-  console.log("Please provide name of breed.");
-  process.exit(1);
-}
+  // send HTTP request to API
+  request(url, (error, response, body) => {
 
-// make a GET request to API endpoint
-const url = `https://api.thecatapi.com/v1/breeds/search?q=${breedName}`;
+    // If there's an error, call callback with error, and 'null' for description
+    if (error) {
+      callback(error, null);
+      return;
+    }
 
-// Log the breed name and the request URL
-console.log(`Breed name: ${breedName}`);
-console.log(`Request URL: ${url}`);
+    // If no error, parse JSON into JavaScript object
+    const data = JSON.parse(body);
 
-// Make a GET request to API endpoint
-request(url, (error, response, body) => {
-  // If there's an error, log it and return
-  if (error) {
-    console.log('Error:', error);
-    return;
-  }
+    // If data array empty (no breed found), call callback with custom error message and 'null' for description
+    if (data.length === 0) {
+      callback('No breed found', null);
+      return;
+    }
 
-  // Parse JSON into JavaScript object
-  const data = JSON.parse(body);
+    // if breed found, call callback with 'null' for error, breed description as second argument
+    callback(null, data[0].description);
+  });
+  
+};
 
-  // If no breed in response, log message and return
-  if (data.length === 0) {
-    console.log('No breed found');
-    return;
-  }
-
-  // If one breed in response, log its description
-  console.log(data[0].description);
-});
+module.exports = { fetchBreedDescription };
